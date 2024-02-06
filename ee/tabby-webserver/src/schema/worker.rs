@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use axum::middleware::Next;
-use hyper::{Body, Request};
+use hyper::{body::Incoming, Request};
 use juniper::{GraphQLEnum, GraphQLObject};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -45,7 +45,7 @@ pub trait WorkerService: Send + Sync {
     async fn unregister_worker(&self, worker_addr: &str);
     async fn dispatch_request(
         &self,
-        request: Request<Body>,
-        next: Next<Body>,
+        request: Request<Incoming>,
+        next: Next,
     ) -> axum::response::Response;
 }

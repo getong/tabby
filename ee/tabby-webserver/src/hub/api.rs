@@ -2,7 +2,8 @@ use std::net::IpAddr;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use axum::{headers::Header, http::HeaderName};
+use axum::http::HeaderName;
+use axum_extra::headers::Header;
 use hyper::Request;
 use serde::{Deserialize, Serialize};
 use tabby_common::{
@@ -167,7 +168,7 @@ impl Header for ConnectHubRequest {
         &CLIENT_REQUEST_HEADER
     }
 
-    fn decode<'i, I>(values: &mut I) -> Result<Self, axum::headers::Error>
+    fn decode<'i, I>(values: &mut I) -> Result<Self, axum_extra::headers::Error>
     where
         Self: Sized,
         I: Iterator<Item = &'i axum::http::HeaderValue>,
@@ -176,9 +177,9 @@ impl Header for ConnectHubRequest {
             .map(|x| serde_json::from_slice(x.as_bytes()))
             .collect();
         if let Some(x) = x.pop() {
-            x.map_err(|_| axum::headers::Error::invalid())
+            x.map_err(|_| axum_extra::headers::Error::invalid())
         } else {
-            Err(axum::headers::Error::invalid())
+            Err(axum_extra::headers::Error::invalid())
         }
     }
 

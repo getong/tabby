@@ -8,12 +8,11 @@ use std::{
 
 use anyhow::Result;
 use axum::{
-    body::boxed,
+    body::Body,
     http::{header, Request, Uri},
     response::{IntoResponse, Response},
     Json,
 };
-use hyper::Body;
 use serde::{Deserialize, Serialize};
 use tabby_common::{
     config::{Config, RepositoryConfig},
@@ -225,7 +224,7 @@ impl RepositoryCache {
         let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
         let resp = ServeDir::new(root).oneshot(req).await?;
 
-        Ok(resp.map(boxed))
+        Ok(resp.map(Body::new))
     }
 
     pub fn resolve_meta(&self, key: &RepositoryKey) -> Option<RepositoryMeta> {

@@ -6,7 +6,7 @@ use axum::{
     middleware::{from_fn_with_state, Next},
     routing, Extension, Router,
 };
-use hyper::Body;
+use hyper::body::Incoming;
 use juniper_axum::{graphiql, graphql, playground};
 use tabby_common::{
     api::{code::CodeSearch, event::RawEventLogger},
@@ -75,8 +75,8 @@ pub async fn attach_webserver(
 
 async fn distributed_tabby_layer(
     State(ws): State<Arc<dyn ServiceLocator>>,
-    request: Request<Body>,
-    next: Next<Body>,
+    request: Request<Incoming>,
+    next: Next,
 ) -> axum::response::Response {
     ws.worker().dispatch_request(request, next).await
 }

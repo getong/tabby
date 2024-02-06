@@ -11,11 +11,20 @@ use std::{net::SocketAddr, num::ParseIntError, sync::Arc};
 use anyhow::Result;
 use async_trait::async_trait;
 use axum::{
+    body::Body,
     http::{HeaderName, HeaderValue, Request},
     middleware::Next,
     response::IntoResponse,
 };
-use hyper::{client::HttpConnector, Body, Client, StatusCode};
+use http_body_util::Full;
+use hyper::{
+    body::{Bytes, Incoming},
+    StatusCode,
+};
+use hyper_util::{
+    client::legacy::{connect::HttpConnector, Client},
+    rt::TokioExecutor,
+};
 use tabby_common::{
     api::{code::CodeSearch, event::RawEventLogger},
     constants::USER_HEADER_FIELD_NAME,
@@ -34,7 +43,7 @@ use crate::schema::{
 };
 
 struct ServerContext {
-    client: Client<HttpConnector>,
+    client: Client<HttpConnector, Full<Bytes>>,
     completion: worker::WorkerGroup,
     chat: worker::WorkerGroup,
     db_conn: DbConn,
@@ -49,7 +58,7 @@ impl ServerContext {
         let db_conn = DbConn::new().await.unwrap();
         run_cron(&db_conn).await;
         Self {
-            client: Client::default(),
+            client: Client::builder(TokioExecutor::new()).build_http(),
             completion: worker::WorkerGroup::default(),
             chat: worker::WorkerGroup::default(),
             mail_service: Arc::new(
@@ -63,7 +72,7 @@ impl ServerContext {
         }
     }
 
-    async fn authorize_request(&self, request: &Request<Body>) -> (bool, Option<String>) {
+    async fn authorize_request(&self, request: &Request<Incoming>) -> (bool, Option<String>) {
         let path = request.uri().path();
         if !(path.starts_with("/v1/") || path.starts_with("/v1beta/")) {
             return (true, None);
@@ -141,8 +150,8 @@ impl WorkerService for ServerContext {
 
     async fn dispatch_request(
         &self,
-        mut request: Request<Body>,
-        next: Next<Body>,
+        mut request: Request<Incoming>,
+        next: Next,
     ) -> axum::response::Response {
         let (auth, user) = self.authorize_request(&request).await;
         if !auth {

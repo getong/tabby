@@ -4,13 +4,13 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use axum::{
+    body::Body,
     extract::{Path, State},
     http::{Request, StatusCode},
     middleware::{from_fn_with_state, Next},
-    response::{IntoResponse, Response},
+    response::Response,
     routing, Json, Router,
 };
-use hyper::Body;
 use juniper_axum::extract::AuthBearer;
 pub use resolve::RepositoryCache;
 use tracing::{instrument, warn};
@@ -41,11 +41,11 @@ async fn require_login_middleware(
     State(auth): State<Arc<dyn AuthenticationService>>,
     AuthBearer(token): AuthBearer,
     request: Request<Body>,
-    next: Next<Body>,
+    next: Next,
 ) -> axum::response::Response {
     let unauthorized = axum::response::Response::builder()
         .status(StatusCode::UNAUTHORIZED)
-        .body(Body::empty())
+        .body(Body::empty)
         .unwrap()
         .into_response();
 

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-    body::StreamBody,
+    body::StreamIncoming,
     extract::State,
     http::HeaderValue,
     response::{IntoResponse, Response},
@@ -36,7 +36,7 @@ pub async fn chat_completions(
     let stream = match stream {
         Ok(s) => s,
         Err(_) => {
-            let mut response = StreamBody::default().into_response();
+            let mut response = StreamIncoming::default().into_response();
             *response.status_mut() = hyper::StatusCode::UNPROCESSABLE_ENTITY;
             return response;
         }
@@ -45,7 +45,7 @@ pub async fn chat_completions(
         Ok(s) => Ok(format!("data: {s}\n\n")),
         Err(e) => Err(anyhow::Error::from(e)),
     });
-    let mut resp = StreamBody::new(s).into_response();
+    let mut resp = StreamIncoming::new(s).into_response();
     resp.headers_mut().append(
         "Content-Type",
         HeaderValue::from_str("text/event-stream").unwrap(),

@@ -8,11 +8,13 @@ use std::{
 
 use api::{ConnectHubRequest, Hub};
 use axum::{
+    body::Body,
+    // TypedHeader,
     extract::{ws::WebSocket, ConnectInfo, State, WebSocketUpgrade},
     response::IntoResponse,
-    TypedHeader,
 };
-use hyper::{Body, StatusCode};
+use axum_extra::TypedHeader;
+use hyper::StatusCode;
 use juniper_axum::extract::AuthBearer;
 use tabby_common::{api::code::SearchResponse, config::RepositoryConfig};
 use tarpc::server::{BaseChannel, Channel};
